@@ -1,0 +1,45 @@
+name: Hourly Village Cinemas Analytics
+
+on:
+  schedule:
+    # Runs at the top of every hour (e.g., 1:00, 2:00, etc.)
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allows you to trigger the run manually from the GitHub UI
+
+permissions:
+  contents: write # Required so the bot can commit the JSON files back to the repo
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' 
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install aiohttp
+
+      - name: Run Analytics Script
+        env:
+          VILLAGE_COOKIES: ${{ secrets.VILLAGE_COOKIES }}
+        run: |
+          # Updated to use VCR.py
+          python VCR.py --out ./data
+
+      - name: Commit and Push Data
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add ./data/
+          
+          # Checks for changes, commits, and pushes.
+          # [skip ci] prevents an infinite loop of workflows.
+          git diff --quiet && git diff --staged --quiet || (git commit -m "📊 Auto-update analytics data [skip ci]" && git push)
