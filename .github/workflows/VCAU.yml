@@ -2,12 +2,11 @@ name: Hourly Village Cinemas Analytics
 
 on:
   schedule:
-    # Runs at the top of every hour
     - cron: '0 * * * *'
-  workflow_dispatch: # Allows manual trigger
+  workflow_dispatch:
 
 permissions:
-  contents: write # Required to commit data back to the repo
+  contents: write
 
 jobs:
   scrape-and-update:
@@ -27,29 +26,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install aiohttp
 
-      - name: Run VCR Script (Live Sales)
+      - name: Run VCR Script
         env:
           VILLAGE_COOKIES: ${{ secrets.VILLAGE_COOKIES }}
         run: |
           python VCR.py --out ./data
 
-      - name: Wait for 8 Minute Gap
+      - name: Wait for Time Gap
         run: |
-          # 8 minutes * 60 seconds = 480 seconds
-          echo "Entering 8-minute cooldown period..."
+          # Set the duration here (e.g., 60s for 1 minute, 300s for 5 minutes)
+          echo "Waiting for 60 seconds before running VCA..."
           sleep 60
 
-      - name: Run VCA Script (Advance Sales)
+      - name: Run VCA Script
         env:
           VILLAGE_COOKIES: ${{ secrets.VILLAGE_COOKIES }}
         run: |
+          # Ensure VCA.py exists and handles the same output directory
           python VCA.py --out ./data
 
-      - name: Commit and Push All Data
+      - name: Commit and Push Data
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add ./data/
           
-          # Only commit if there are actual changes to the JSON files
-          git diff --quiet && git diff --staged --quiet || (git commit -m "📊 Auto-update: VCR and VCA data [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "📊 Auto-update VCR and VCA data [skip ci]" && git push)
