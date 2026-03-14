@@ -37,7 +37,7 @@ jobs:
         run: |
           # 8 minutes * 60 seconds = 480 seconds
           echo "Entering 8-minute cooldown period..."
-          sleep 480
+          sleep 60
 
       - name: Run VCA Script (Advance Sales)
         env:
